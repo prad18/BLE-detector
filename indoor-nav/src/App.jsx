@@ -1,31 +1,20 @@
 import { useEffect, useState } from "react";
-import Map, { Marker, NavigationControl } from "react-map-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
-
-const MAPBOX_TOKEN = "YOUR_MAPBOX_ACCESS_TOKEN"; // Replace with your Mapbox token
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 function App() {
-  const [viewport, setViewport] = useState({
-    latitude: 19.0748,
-    longitude: 72.8856,
-    zoom: 18,
-  });
-
   const [destination, setDestination] = useState("");
-  const [userLocation, setUserLocation] = useState(null);
+  const [userLocation, setUserLocation] = useState([19.0748, 72.8856]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const zone = params.get("zone");
+    if (zone) setDestination(zone);
+
     navigator.geolocation.getCurrentPosition((pos) => {
-      setUserLocation({
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-      });
+      setUserLocation([pos.coords.latitude, pos.coords.longitude]);
     });
   }, []);
-
-  const handleNavigate = () => {
-    alert(`Navigation to ${destination} (Demo Only)`);
-  };
 
   return (
     <div className="h-screen w-screen">
@@ -39,27 +28,21 @@ function App() {
           className="w-full px-3 py-2 border rounded mb-2"
         />
         <button
-          onClick={handleNavigate}
+          onClick={() => alert(`Navigate to ${destination}`)}
           className="w-full bg-blue-600 text-white px-3 py-2 rounded"
         >
           Navigate
         </button>
       </div>
-      <Map
-        mapboxAccessToken={MAPBOX_TOKEN}
-        initialViewState={viewport}
-        style={{ width: "100%", height: "100%" }}
-        mapStyle="mapbox://styles/mapbox/streets-v11"
-      >
-        {userLocation && (
-          <Marker
-            latitude={userLocation.latitude}
-            longitude={userLocation.longitude}
-            color="red"
-          />
-        )}
-        <NavigationControl position="top-right" />
-      </Map>
+      <MapContainer center={userLocation} zoom={18} style={{ height: "100%", width: "100%" }}>
+        <TileLayer
+          attribution='&copy; OpenStreetMap contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={userLocation}>
+          <Popup>You are here</Popup>
+        </Marker>
+      </MapContainer>
     </div>
   );
 }
